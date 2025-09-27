@@ -115,11 +115,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { MailIcon, LockIcon, EyeIcon, EyeOffIcon } from 'lucide-vue-next'
 import AuthLayout from '@/layouts/AuthLayout.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 
+const router = useRouter()
 const showPassword = ref(false)
 const email = ref('')
 const password = ref('')
@@ -128,10 +130,11 @@ const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value
 }
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   console.log('Login with:', {
     email: email.value,
     password: password.value
   })
+  router.push('/admin')
 }
 </script>
