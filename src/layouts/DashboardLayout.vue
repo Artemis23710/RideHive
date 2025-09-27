@@ -170,13 +170,13 @@ const customerNavItems = [
 
 const adminNavItems = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
-  { name: 'Fleet Management', href: '/admin/fleet', icon: CalendarIcon },
-  { name: 'Tour Management', href: '/admin/tours', icon: CalendarIcon },
+  { name: 'Fleet Management', href: '/fleets', icon: CalendarIcon },
+  { name: 'Tour Management', href: '/tours', icon: CalendarIcon },
   { name: 'Pricing', href: '/admin/pricing', icon: CalendarIcon },
   { name: 'Analytics', href: '/admin/analytics', icon: CalendarIcon },
   { name: 'Reports', href: '/admin/analytics', icon: CalendarIcon },
   { name: 'Settings', href: '/admin/analytics', icon: CalendarIcon },
-  { name: 'Users', href: '/admin/analytics', icon: CalendarIcon }
+  { name: 'Users', href: '/users', icon: CalendarIcon }
 ]
 
 const navItems = computed(() => {
