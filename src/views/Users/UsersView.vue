@@ -15,7 +15,7 @@
             <DownloadIcon class="h-4 w-4 mr-2" />
             Export
           </BaseButton>
-          <BaseButton>
+          <BaseButton @click="openAddUserModal">
             <PlusIcon class="h-4 w-4 mr-2" />
             Add User
           </BaseButton>
@@ -78,7 +78,7 @@
           </div>
           
           <BaseButton variant="outline">
-            <FilterIcon class="h-4 w-4 mr-2" />
+            <FilterIcon class="h-3 w-3 mr-2" />
             Filters
           </BaseButton>
         </div>
@@ -101,6 +101,7 @@
         </div>
       </CardHeader>
       
+      <!-- table -->
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead class="bg-gray-50 dark:bg-gray-800">
@@ -235,119 +236,414 @@
           </div>
         </div>
       </div>
+
     </BaseCard>
+
+    <!-- Add User Modal -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div
+          v-if="showAddUserModal"
+          class="fixed inset-0 z-50 overflow-y-auto"
+          @click.self="closeAddUserModal"
+        >
+          <div class="flex min-h-screen items-center justify-center p-4">
+            <!-- Backdrop -->
+            <div
+              class="fixed inset-0 bg-black/50 transition-opacity"
+              @click="closeAddUserModal"
+            ></div>
+
+            <!-- Modal -->
+            <div
+              class="relative w-full max-w-2xl transform rounded-lg bg-white dark:bg-gray-800 shadow-xl transition-all"
+            >
+              <!-- Modal Header -->
+              <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  Add New User
+                </h3>
+                <button
+                  @click="closeAddUserModal"
+                  class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                >
+                  <XIcon class="h-5 w-5" />
+                </button>
+              </div>
+
+              <!-- Modal Body -->
+              <form @submit.prevent="handleAddUser" class="px-6 py-4">
+                <div class="space-y-4">
+                  <!-- Full Name -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Full Name <span class="text-red-500">*</span>
+                    </label>
+                    <BaseInput
+                      v-model="newUser.name"
+                      placeholder="Enter full name"
+                      full-width
+                      required
+                    />
+                  </div>
+
+                  <!-- Email -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Email Address <span class="text-red-500">*</span>
+                    </label>
+                    <BaseInput
+                      v-model="newUser.email"
+                      type="email"
+                      placeholder="Enter email address"
+                      full-width
+                      required
+                    />
+                  </div>
+
+                  <!-- Phone Number -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Phone Number
+                    </label>
+                    <BaseInput
+                      v-model="newUser.phone"
+                      type="tel"
+                      placeholder="Enter phone number"
+                      full-width
+                    />
+                  </div>
+
+                  <!-- Username -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Username <span class="text-red-500">*</span>
+                    </label>
+                    <BaseInput
+                      v-model="newUser.username"
+                      placeholder="Enter username"
+                      full-width
+                      required
+                    />
+                  </div>
+
+                  <!-- Password -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Password <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                      <BaseInput
+                        v-model="newUser.password"
+                        :type="showPassword ? 'text' : 'password'"
+                        placeholder="Enter password"
+                        full-width
+                        required
+                      />
+                      <button
+                        type="button"
+                        @click="showPassword = !showPassword"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      >
+                        <EyeIcon v-if="!showPassword" class="h-4 w-4" />
+                        <EyeOffIcon v-else class="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Confirm Password -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Confirm Password <span class="text-red-500">*</span>
+                    </label>
+                    <BaseInput
+                      v-model="newUser.confirmPassword"
+                      :type="showPassword ? 'text' : 'password'"
+                      placeholder="Confirm password"
+                      full-width
+                      required
+                    />
+                  </div>
+
+                  <!-- Role -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Role <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                      v-model="newUser.role"
+                      required
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    >
+                      <option value="">Select a role</option>
+                      <option value="customer">Customer</option>
+                      <option value="driver">Driver</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+
+                  <!-- Status -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Status <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                      v-model="newUser.status"
+                      required
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="suspended">Suspended</option>
+                    </select>
+                  </div>
+
+                  <!-- Error Message -->
+                  <div v-if="errorMessage" class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p class="text-sm text-red-600 dark:text-red-400">{{ errorMessage }}</p>
+                  </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="mt-6 flex justify-end space-x-3">
+                  <BaseButton
+                    type="button"
+                    variant="outline"
+                    @click="closeAddUserModal"
+                  >
+                    Cancel
+                  </BaseButton>
+                  <BaseButton type="submit">
+                    <PlusIcon class="h-4 w-4 mr-2" />
+                    Add User
+                  </BaseButton>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+
   </DashboardLayout>
 </template>
 
-<script setup lang="ts">
-import { ref } from 'vue'
-import DashboardLayout from '@/layouts/DashboardLayout.vue'
-import BaseCard from '@/components/ui/BaseCard.vue'
-import CardHeader from '@/components/ui/CardHeader.vue'
-import CardContent from '@/components/ui/CardContent.vue'
-import BaseButton from '@/components/ui/BaseButton.vue'
-import BaseInput from '@/components/ui/BaseInput.vue'
-import {
-  UsersIcon,
-  UserIcon,
-  ShieldCheckIcon,
-  ClockIcon,
-  PlusIcon,
-  SearchIcon,
-  FilterIcon,
-  DownloadIcon,
-  EditIcon,
-  EyeIcon,
-  TrashIcon,
-  GridIcon,
-  ListIcon
-} from 'lucide-vue-next'
+  <script setup lang="ts">
+  import { ref } from 'vue'
+  import DashboardLayout from '@/layouts/DashboardLayout.vue'
+  import BaseCard from '@/components/ui/BaseCard.vue'
+  import CardHeader from '@/components/ui/CardHeader.vue'
+  import CardContent from '@/components/ui/CardContent.vue'
+  import BaseButton from '@/components/ui/BaseButton.vue'
+  import BaseInput from '@/components/ui/BaseInput.vue'
+  import {
+    UsersIcon,
+    UserIcon,
+    ShieldCheckIcon,
+    ClockIcon,
+    PlusIcon,
+    SearchIcon,
+    FilterIcon,
+    DownloadIcon,
+    EditIcon,
+    EyeIcon,
+    EyeOffIcon,
+    TrashIcon,
+    GridIcon,
+    ListIcon,
+    XIcon
+  } from 'lucide-vue-next'
 
-const searchQuery = ref('')
+  const searchQuery = ref('')
+  const showAddUserModal = ref(false)
+  const showPassword = ref(false)
+  const errorMessage = ref('')
 
-// Sample user stats
-const userStats = ref([
-  {
-    title: 'Total Users',
-    value: '1,234',
-    icon: UsersIcon,
-    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
-    iconColor: 'text-blue-600 dark:text-blue-400'
-  },
-  {
-    title: 'Active Users',
-    value: '1,180',
-    icon: UserIcon,
-    bgColor: 'bg-green-100 dark:bg-green-900/30',
-    iconColor: 'text-green-600 dark:text-green-400'
-  },
-  {
-    title: 'Admins',
-    value: '12',
-    icon: ShieldCheckIcon,
-    bgColor: 'bg-purple-100 dark:bg-purple-900/30',
-    iconColor: 'text-purple-600 dark:text-purple-400'
-  },
-  {
-    title: 'New This Month',
-    value: '148',
-    icon: ClockIcon,
-    bgColor: 'bg-teal-100 dark:bg-teal-900/30',
-    iconColor: 'text-teal-600 dark:text-teal-400'
+  // New user form data
+  const newUser = ref({
+    name: '',
+    email: '',
+    phone: '',
+    username: '',
+    password: '',
+    confirmPassword: '',
+    role: '',
+    status: 'active'
+  })
+
+  // Sample user stats
+  const userStats = ref([
+    {
+      title: 'Total Users',
+      value: '1,234',
+      icon: UsersIcon,
+      bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+      iconColor: 'text-blue-600 dark:text-blue-400'
+    },
+    {
+      title: 'Active Users',
+      value: '1,180',
+      icon: UserIcon,
+      bgColor: 'bg-green-100 dark:bg-green-900/30',
+      iconColor: 'text-green-600 dark:text-green-400'
+    },
+    {
+      title: 'Admins',
+      value: '12',
+      icon: ShieldCheckIcon,
+      bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+      iconColor: 'text-purple-600 dark:text-purple-400'
+    },
+    {
+      title: 'New This Month',
+      value: '148',
+      icon: ClockIcon,
+      bgColor: 'bg-teal-100 dark:bg-teal-900/30',
+      iconColor: 'text-teal-600 dark:text-teal-400'
+    }
+  ])
+
+  // Sample users data
+  const users = ref([
+    {
+      id: 1,
+      name: 'John Smith',
+      email: 'john@example.com',
+      role: 'customer',
+      status: 'active',
+      lastActive: '2 hours ago',
+      totalBookings: 12,
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    },
+    {
+      id: 2,
+      name: 'Sarah Johnson',
+      email: 'sarah@example.com',
+      role: 'admin',
+      status: 'active',
+      lastActive: '1 day ago',
+      totalBookings: 0,
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    },
+    {
+      id: 3,
+      name: 'Michael Brown',
+      email: 'michael@example.com',
+      role: 'driver',
+      status: 'active',
+      lastActive: '5 minutes ago',
+      totalBookings: 45,
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    },
+    {
+      id: 4,
+      name: 'Emily Davis',
+      email: 'emily@example.com',
+      role: 'customer',
+      status: 'inactive',
+      lastActive: '1 week ago',
+      totalBookings: 3,
+      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    },
+    {
+      id: 5,
+      name: 'David Wilson',
+      email: 'david@example.com',
+      role: 'customer',
+      status: 'suspended',
+      lastActive: '2 weeks ago',
+      totalBookings: 8,
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    }
+  ])
+
+  const openAddUserModal = () => {
+    showAddUserModal.value = true
+    errorMessage.value = ''
   }
-])
 
-// Sample users data
-const users = ref([
-  {
-    id: 1,
-    name: 'John Smith',
-    email: 'john@example.com',
-    role: 'customer',
-    status: 'active',
-    lastActive: '2 hours ago',
-    totalBookings: 12,
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-  },
-  {
-    id: 2,
-    name: 'Sarah Johnson',
-    email: 'sarah@example.com',
-    role: 'admin',
-    status: 'active',
-    lastActive: '1 day ago',
-    totalBookings: 0,
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-  },
-  {
-    id: 3,
-    name: 'Michael Brown',
-    email: 'michael@example.com',
-    role: 'driver',
-    status: 'active',
-    lastActive: '5 minutes ago',
-    totalBookings: 45,
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-  },
-  {
-    id: 4,
-    name: 'Emily Davis',
-    email: 'emily@example.com',
-    role: 'customer',
-    status: 'inactive',
-    lastActive: '1 week ago',
-    totalBookings: 3,
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-  },
-  {
-    id: 5,
-    name: 'David Wilson',
-    email: 'david@example.com',
-    role: 'customer',
-    status: 'suspended',
-    lastActive: '2 weeks ago',
-    totalBookings: 8,
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+  const closeAddUserModal = () => {
+    showAddUserModal.value = false
+    resetForm()
   }
-])
-</script>
+
+  const resetForm = () => {
+    newUser.value = {
+      name: '',
+      email: '',
+      phone: '',
+      username: '',
+      password: '',
+      confirmPassword: '',
+      role: '',
+      status: 'active'
+    }
+    errorMessage.value = ''
+    showPassword.value = false
+  }
+
+  const handleAddUser = () => {
+    errorMessage.value = ''
+
+    // Validation
+    if (newUser.value.password !== newUser.value.confirmPassword) {
+      errorMessage.value = 'Passwords do not match'
+      return
+    }
+
+    if (newUser.value.password.length < 8) {
+      errorMessage.value = 'Password must be at least 8 characters long'
+      return
+    }
+
+    // Generate a random avatar
+    const avatars = [
+      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+      'https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    ]
+
+    // Add new user to the list
+    const newUserData = {
+      id: users.value.length + 1,
+      name: newUser.value.name,
+      email: newUser.value.email,
+      role: newUser.value.role,
+      status: newUser.value.status,
+      lastActive: 'Just now',
+      totalBookings: 0,
+      avatar: avatars[Math.floor(Math.random() * avatars.length)]
+    }
+
+    users.value.unshift(newUserData)
+
+    // Here you would typically make an API call to save the user
+    // Example: await api.users.create(newUser.value)
+
+    closeAddUserModal()
+  }
+  </script>
+
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-active > div > div,
+.modal-leave-active > div > div {
+  transition: transform 0.3s ease;
+}
+
+.modal-enter-from > div > div,
+.modal-leave-to > div > div {
+  transform: scale(0.95);
+}
+</style>

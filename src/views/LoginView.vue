@@ -40,6 +40,16 @@
         </div>
       </div>
       
+      <!-- Error Message Display -->
+      <div v-if="errorMessage" class="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <div class="flex items-center">
+          <svg class="h-5 w-5 text-red-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="text-red-800 dark:text-red-200 text-sm font-medium">{{ errorMessage }}</span>
+        </div>
+      </div>
+      
       <!-- Login form -->
       <form class="mt-6 space-y-6" @submit.prevent="handleSubmit">
         <BaseInput
@@ -50,6 +60,7 @@
           required
           full-width
           :left-icon="MailIcon"
+          :disabled="isLoading"
         />
         
         <div class="space-y-1">
@@ -64,6 +75,7 @@
             :right-icon="showPassword ? EyeOffIcon : EyeIcon"
             right-icon-clickable
             @right-icon-click="togglePasswordVisibility"
+            :disabled="isLoading"
           />
           
           <div class="flex items-center justify-between">
@@ -73,6 +85,7 @@
                 name="remember-me"
                 type="checkbox"
                 class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+                :disabled="isLoading"
               />
               <label
                 for="remember-me"
@@ -92,8 +105,18 @@
           </div>
         </div>
         
-        <BaseButton type="submit" full-width>
-          Sign in
+        <BaseButton 
+          type="submit" 
+          full-width
+          :disabled="isLoading"
+          :loading="isLoading"
+        >
+          <template v-if="isLoading">
+            Signing in...
+          </template>
+          <template v-else>
+            Sign in
+          </template>
         </BaseButton>
         
         <div class="text-center text-sm">
@@ -120,21 +143,77 @@ import { MailIcon, LockIcon, EyeIcon, EyeOffIcon } from 'lucide-vue-next'
 import AuthLayout from '@/layouts/AuthLayout.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import { buildApiUrl, API_CONFIG } from '@/config/api'
 
 const router = useRouter()
 const showPassword = ref(false)
 const email = ref('')
 const password = ref('')
+const errorMessage = ref('')
+const isLoading = ref(false)
 
 const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value
 }
 
 const handleSubmit = async () => {
-  console.log('Login with:', {
-    email: email.value,
-    password: password.value
-  })
-  router.push('/admin')
+  // Basic validation
+  if (!email.value || !password.value) {
+    errorMessage.value = 'Please fill in all fields'
+    return
+  }
+
+  errorMessage.value = ''
+  isLoading.value = true
+
+  try {
+    console.log('Login with:', {
+      email: email.value,
+      password: password.value
+    })
+
+    const response = await fetch(buildApiUrl(API_CONFIG.endpoints.auth.login), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: email.value,
+        password: password.value
+      })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Login failed')
+    }
+
+    if (data.message === 'Login successful') {
+      console.log('Login successful:', data.data.user)
+      
+      // Store user data and token in localStorage
+      localStorage.setItem('user', JSON.stringify(data.data.user))
+      if (data.data.token) {
+        localStorage.setItem('token', data.data.token)
+      }
+      // Redirect to admin page
+      router.push('/admin')
+    } else {
+      throw new Error(data.error || 'Login failed')
+    }
+
+  } catch (error: any) {
+    console.error('Login error:', error)
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      errorMessage.value = 'Network error: Unable to connect to server'
+    } else if (error.message === 'Invalid email or password') {
+      errorMessage.value = 'Invalid email or password. Please try again.'
+    } else {
+      errorMessage.value = error.message || 'An error occurred during login. Please try again.'
+    }
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
