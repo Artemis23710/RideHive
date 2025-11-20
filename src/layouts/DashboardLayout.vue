@@ -121,7 +121,7 @@
               </div>
             </div>
             
-            <button class="ml-3 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
+            <button @click="handleLogout" class="ml-3 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
               <LogOutIcon class="h-6 w-6" aria-hidden="true" />
             </button>
           </div>
@@ -138,7 +138,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink,useRouter  } from 'vue-router'
 import Logo from '@/components/Logo.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import {
@@ -160,6 +160,7 @@ const props = withDefaults(defineProps<Props>(), {
   userType: 'customer'
 })
 
+const router = useRouter()
 const sidebarOpen = ref(false)
 
 const customerNavItems = [
@@ -182,4 +183,14 @@ const adminNavItems = [
 const navItems = computed(() => {
   return props.userType === 'admin' ? adminNavItems : customerNavItems
 })
+
+const handleLogout = () => {
+  // Remove user data from localStorage
+  localStorage.removeItem('user')
+  localStorage.removeItem('token')
+  
+  // Redirect to login page
+  router.push('/login')
+}
+
 </script>

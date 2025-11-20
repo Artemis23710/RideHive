@@ -42,6 +42,16 @@
       
       <!-- Register form -->
       <form class="mt-6 space-y-6" @submit.prevent="handleSubmit">
+        <!-- Error message -->
+        <div v-if="errorMessage" class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <p class="text-sm text-red-600 dark:text-red-400">{{ errorMessage }}</p>
+        </div>
+        
+        <!-- Success message -->
+        <div v-if="successMessage" class="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+          <p class="text-sm text-green-600 dark:text-green-400">{{ successMessage }}</p>
+        </div>
+        
         <BaseInput
           v-model="formData.name"
           type="text"
@@ -51,6 +61,7 @@
           required
           full-width
           :left-icon="UserIcon"
+          :disabled="isLoading"
         />
         
         <BaseInput
@@ -62,6 +73,7 @@
           required
           full-width
           :left-icon="MailIcon"
+          :disabled="isLoading"
         />
         
         <div class="space-y-1">
@@ -76,16 +88,19 @@
             :left-icon="LockIcon"
             :right-icon="showPassword ? EyeOffIcon : EyeIcon"
             right-icon-clickable
+            :disabled="isLoading"
             @right-icon-click="togglePasswordVisibility"
           />
           
           <div class="flex items-center">
             <input
               id="terms"
+              v-model="termsAccepted"
               name="terms"
               type="checkbox"
               class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
               required
+              :disabled="isLoading"
             />
             <label
               for="terms"
@@ -109,8 +124,18 @@
           </div>
         </div>
         
-        <BaseButton type="submit" full-width>
-          Create account
+        <BaseButton 
+          type="submit" 
+          full-width 
+          :disabled="isLoading"
+          :loading="isLoading"
+        >
+          <template v-if="isLoading">
+            Creating account...
+          </template>
+          <template v-else>
+            Create account
+          </template>
         </BaseButton>
         
         <div class="text-center text-sm">
@@ -131,13 +156,21 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { MailIcon, LockIcon, UserIcon, EyeIcon, EyeOffIcon } from 'lucide-vue-next'
 import AuthLayout from '@/layouts/AuthLayout.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import { buildApiUrl, API_CONFIG } from '@/config/api'
+
+const router = useRouter()
 
 const showPassword = ref(false)
+const isLoading = ref(false)
+const errorMessage = ref('')
+const successMessage = ref('')
+const termsAccepted = ref(false)
+
 const formData = reactive({
   name: '',
   email: '',
@@ -148,7 +181,86 @@ const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value
 }
 
-const handleSubmit = () => {
-  console.log('Register with:', formData)
+const handleSubmit = async () => {
+  // Basic validation
+  if (!formData.name || !formData.email || !formData.password) {
+    errorMessage.value = 'Please fill in all fields'
+    return
+  }
+
+  if (!termsAccepted.value) {
+    errorMessage.value = 'Please accept the terms and conditions'
+    return
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(formData.email)) {
+    errorMessage.value = 'Please enter a valid email address'
+    return
+  }
+
+  if (formData.password.length < 6) {
+    errorMessage.value = 'Password must be at least 6 characters long'
+    return
+  }
+
+  errorMessage.value = ''
+  successMessage.value = ''
+  isLoading.value = true
+
+  try {
+    console.log('Register with:', {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password
+    })
+
+    const response = await fetch(buildApiUrl(API_CONFIG.endpoints.auth.register), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password
+      })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Registration failed')
+    }
+
+    // Check for success based on the actual API response structure
+    if (response.ok && data.message === 'User created successfully') {
+      successMessage.value = data.message || 'Registration successful!'
+      console.log('Registration successful:', data.data)
+      
+      // Redirect to login page after successful registration
+      setTimeout(() => {
+        router.push('/login') // This matches your route name 'loginPage'
+      }, 2000)
+    } else {
+      throw new Error(data.error || data.message || 'Registration failed')
+    }
+
+  } catch (error: any) {
+    console.error('Registration error:', error)
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      errorMessage.value = 'Network error: Unable to connect to server. Please try again later.'
+    } else if (error.message.includes('Email already exists') || error.message.includes('User already exists')) {
+      errorMessage.value = 'An account with this email already exists. Please use a different email or login.'
+    } else if (error.message.includes('Invalid email') || error.message.includes('email format')) {
+      errorMessage.value = 'Please enter a valid email address.'
+    } else if (error.message.includes('password') || error.message.includes('Password')) {
+      errorMessage.value = 'Password requirements not met. Please try a different password.'
+    } else {
+      errorMessage.value = error.message || 'An error occurred during registration. Please try again.'
+    }
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>

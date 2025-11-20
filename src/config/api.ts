@@ -3,6 +3,7 @@ export const API_CONFIG = {
   endpoints: {
     auth: {
       login: '/api/auth/login',
+      register: '/api/auth/register',
     },
     user: '/api/user',
     // Add other endpoints here
